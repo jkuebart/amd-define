@@ -179,9 +179,11 @@ Limitations
 -----------
 
 There are certainly a lot of unimplemented features – in fact, everything
-that isn't mentioned above. Most notably missing are [loader
-plugins][PLUG]. There's also no support for the special dependencies
-[`require`][REQ0] and [`module`][CJS].
+that isn't mentioned above. For example, no normalisation is performed on
+module ID's, so names containing `.` or `..` elements will be treated
+incorrectly. Most notably missing are [loader plugins][PLUG]. There's also
+no support for the special dependencies [`require`][REQ0] and
+[`module`][CJS].
 
 And don't even get me started about »[source scanning][REQ1]« to support
 `require`…

@@ -1,6 +1,8 @@
 AMD-Define
 ==========
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3bf62e2c86cf4cc88fe3c853307f6a92)](https://www.codacy.com/app/joachim-kuebart/amd-define?utm_source=github.com&utm_medium=referral&utm_content=jkuebart/amd-define&utm_campaign=badger)
+
 So here it is – my submission to the [AMD loader][AMD] fray.
 
 The aim here is to be minimally working and not comprehensive or complete.

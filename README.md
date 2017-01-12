@@ -24,10 +24,9 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 <script src="define.js"></script>
 <script type="text/javascript">
     define([ 'https://d3js.org/d3.v4.min' ], function (d3) {
-        d3.select('div').text('Hello, D3!');
+        d3.select('body').text('Hello, D3!');
     });
 </script>
-<div></div>
 ```
 \[[see](examples/hello-d3.html)\]
 
@@ -180,7 +179,7 @@ Limitations
 
 There are certainly a lot of unimplemented features – in fact, everything
 that isn't mentioned above. For example, no normalisation is performed on
-module ID's, so names containing `.` or `..` elements will be treated
+module IDs, so names containing `.` or `..` elements will be treated
 incorrectly. Most notably missing are [loader plugins][PLUG]. There's also
 no support for the special dependencies [`require`][REQ0] and
 [`module`][CJS].

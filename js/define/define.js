@@ -32,6 +32,11 @@
 var define = (function ctor(m_global, m_options) {
     'use strict';
 
+    // Construct an Error from the arguments.
+    function err() {
+	return new Error([].join.call(arguments, ': '));
+    }
+
     // An immutable stack to keep track of the dependency hierarchy.
     var stack = (function () {
 	var emptyStack = {};
@@ -73,7 +78,7 @@ var define = (function ctor(m_global, m_options) {
 		    if (200 === this.status) {
 			resolve(this.response);
 		    } else {
-			reject(new Error([url, this.status, this.statusText].join(': ')));
+			reject(err(url, this.status, this.statusText));
 		    }
 	       };
 	       xhr.send();
@@ -105,7 +110,7 @@ var define = (function ctor(m_global, m_options) {
 			m_context = void 0;
 			m_global.define = gdef;
 			// Reject Promise if module is still unresoled.
-			module.reject(new Error(['define', 'unresolved dependency', id].join(': ')));
+			module.reject(err('define', 'unresolved dependency', id));
 		    }
 		});
 
@@ -179,7 +184,7 @@ var define = (function ctor(m_global, m_options) {
 			return exports = exports || {};
 		    }
 		    if (defining.includes(dep)) {
-			throw new Error(['define', 'circular dependency', defining.push(dep)].join(': '));
+			throw err('define', 'circular dependency', defining.push(dep));
 		    }
 		    return m_registry.get(dep, defining.push(dep));
 		})).then(function (deps) {

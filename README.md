@@ -133,8 +133,11 @@ dependencies might be resolved differently under the new configuration.
 The configuration options and their meanings are:
 
 * `paths`
-  As a first step when finding a dependency, the module name is
-  (repeatedly) looked up in this object and substituted by the values.
+  As a first step when finding a dependency, if a prefix of the module id
+  componentns matches a property in this object, it is replaced with the
+  corresponding value. For the purpose of prefix detection, the module id
+  is considered to consist of components separated by `/` excluding an
+  optional extension separated by `.`.
 
 * `baseUrl`
   If a dependency does not start with `/` or a URL scheme, this string is

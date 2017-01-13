@@ -37,6 +37,11 @@ var define = (function ctor(m_global, m_options) {
 	return new Error([].join.call(arguments, ': '));
     }
 
+    // A version of lastIndexOf that returns length if not found.
+    function lastIndexOf(s, t) {
+	return (1 + s.length + s.lastIndexOf(t)) % (1 + s.length);
+    }
+
     // An immutable stack to keep track of the dependency hierarchy.
     var stack = (function () {
 	var emptyStack = {};
@@ -94,7 +99,7 @@ var define = (function ctor(m_global, m_options) {
 
 	    if (!m_modules[id]) {
 		// Load and execute the module script.
-		load(idToUrl(id)).then(function (text) {
+		load(idToUrl(id +'.js')).then(function (text) {
 		    var geval = eval, gdef = m_global.define;
 
 		    /*
@@ -199,10 +204,17 @@ var define = (function ctor(m_global, m_options) {
 
     var m_isAbs = RegExp('^(/|[-+.A-Za-z0-9]+:)'); // Test for absolute paths
     function idToUrl(id) {
-	while (m_options.paths.hasOwnProperty(id)) {
-	    id = m_options.paths[id];
+	var prefix;
+	var ext = id.substr(lastIndexOf(id.substr(1 + id.lastIndexOf('/')), '.'));
+	id = id.substr(0, id.length - ext.length);
+	for (prefix in m_options.paths) {
+	    if ({}.hasOwnProperty.call(m_options.paths, prefix) &&
+		(id === prefix || id.startsWith(prefix + '/')))
+	    {
+		id = m_options.paths[prefix] + id.substr(prefix.length);
+	    }
 	}
-	return (m_isAbs.test(id) ? '' : m_options.baseUrl) + id +'.js';
+	return (m_isAbs.test(id) ? '' : m_options.baseUrl) + id + ext;
     }
 
     /**
@@ -216,11 +228,14 @@ var define = (function ctor(m_global, m_options) {
      * Define built-in dependencies.
      *
      * DOMContentLoaded must be attached synchronously.
+     *
+     * FIXME this is wrong if an instance is defined asynchronously. Should
+     * be global!
      */
     var m_domReady = new Promise(function (resolve) {
 	document.addEventListener('DOMContentLoaded', resolve);
     });
-    define('domReady', [], function () {
+    define('domReady', function () {
 	return function (func) { m_domReady.then(func); };
     });
 

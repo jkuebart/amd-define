@@ -21,7 +21,7 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 ```html
 <!doctype html>
 <title>AMD-Define example</title>
-<script src="js/define/define.js"></script>
+<script src="define.js"></script>
 <script type="text/javascript">
     define([ 'https://d3js.org/d3.v4.min' ], function (d3) {
         d3.select('div').text('Hello, D3!');
@@ -44,7 +44,7 @@ This is how it's used:
 ```html
 <!doctype html>
 <title>AMD-Define example</title>
-<script src="js/define/define.js"></script>
+<script src="define.js"></script>
 <script type="text/javascript">
     define([ 'domReady' ], function (domReady) {
         domReady(function () {
@@ -207,10 +207,35 @@ write your own :P
 
 
 [AMD]:  https://github.com/amdjs/amdjs-api/blob/master/AMD.md
+[CJS]:  http://www.requirejs.org/docs/api.html#cjsmodule
 [CYC]:  http://www.requirejs.org/docs/api.html#circular
 [DR]:   http://www.requirejs.org/docs/api.html#pageload
-[UMD]:  https://github.com/umdjs/umd
 [PLUG]: https://github.com/amdjs/amdjs-api/blob/master/LoaderPlugins.md
-[REQ0]:	https://github.com/amdjs/amdjs-api/blob/master/require.md
-[CJS]:  http://www.requirejs.org/docs/api.html#cjsmodule
-[REQ1]:	http://www.requirejs.org/docs/whyamd.html#sugar
+[REQ0]: https://github.com/amdjs/amdjs-api/blob/master/require.md
+[REQ1]: http://www.requirejs.org/docs/whyamd.html#sugar
+[UMD]:  https://github.com/umdjs/umd
+
+
+Build and Installation
+======================
+
+The build process is based on BSD make. If you're on a BSD platform, set
+the `DESTDIR` environment variable to your web deployment location and run
+the familiar
+
+```sh
+make obj
+make all install
+```
+
+On other platforms, you can use [bmake][MAKE], for example.
+
+The build uses [UglifyJS2][UJS]. If not installed globally, set the
+`UGLIFYJS` environment variable to its location.
+
+The `make release` command installs the results of the build process in the
+`dest` directory of the source tree ready for packaging.
+
+
+[MAKE]: http://crufty.net/help/sjg/bmake.html
+[UJS]:  http://lisperator.net/uglifyjs/

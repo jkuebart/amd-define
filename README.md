@@ -3,10 +3,13 @@ AMD-Define
 
 So here it is – my submission to the [AMD loader][AMD] fray.
 
-The aim here is to be minimally working and not comprehensive or complete.
-Some of my projects are so tiny they don't warrant a loader three times
-their own size, while still benefitting from the modularity and dependency
-resolution they provide.
+The aim here is to be minimally working and not comprehensive, complete or
+compatible. Some of my projects are so tiny they don't warrant a loader
+three times their own size, while still benefitting from the modularity and
+dependency resolution they provide.
+
+This loader makes use of commonly available [ECMAScript 6][ES6] features
+such as Promises and won't work in environments that lack them.
 
 Note that in case a circular dependency is detected, an Error will be
 reported. This is in contrast to [some other][CYC] AMD loaders that quietly
@@ -61,7 +64,7 @@ object will later become the module and it is expected that the module
 function defines anything it wishes to export as properties on this object.
 The return value of the module function is ignored in this case.
 
-```javascript
+```js
 define([ 'exports' ], function (exports) {
     exports.f = function () {};
 });
@@ -85,7 +88,7 @@ That's why the module id may be explicitly specified as the first argument
 to `define`. Just like regular modules, the main module of the library
 should not specify a model id.
 
-```javascript
+```js
 // Define a sub-module
 define('sub', { 'hello': 'world' });
 
@@ -107,7 +110,7 @@ The configuration is very minimal. The `config` method returns a new loader
 with a modified configuration which may be used to replace the global
 instance:
 
-```javascript
+```js
 define = define.config({
     'paths': { 'd3': 'https://d3js.org/d3.v4.min' },
 });
@@ -117,7 +120,7 @@ It's also possible to use the customised loader without affecting the
 global environment. Modules loaded this way will then use the *modified*
 loader as the global instance when their dependencies are resolved.
 
-```javascript
+```js
 (function () {
    // This function uses a specially configured loader.
    var lib1 = define.config({ 'baseUrl': 'lib1/' });
@@ -156,7 +159,7 @@ whether or not an AMD loader is present. If you're not into build tools,
 you can use a »universal module definition« ([UMD][UMD]) and this is my
 suggestion:
 
-```javascript
+```js
 (function(r){return r.define||function(e,m){r.Mod=(m||e)($)};}(this))
 ([ 'jquery' ], function ($) {
     return {
@@ -214,6 +217,7 @@ write your own :P
 [CJS]:  http://www.requirejs.org/docs/api.html#cjsmodule
 [CYC]:  http://www.requirejs.org/docs/api.html#circular
 [DR]:   http://www.requirejs.org/docs/api.html#pageload
+[ES6]:  http://www.ecma-international.org/ecma-262/6.0/
 [PLUG]: https://github.com/amdjs/amdjs-api/blob/master/LoaderPlugins.md
 [REQ0]: https://github.com/amdjs/amdjs-api/blob/master/require.md
 [REQ1]: http://www.requirejs.org/docs/whyamd.html#sugar

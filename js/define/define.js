@@ -224,21 +224,6 @@ var define = (function ctor(m_global, m_options) {
 	return ctor(m_global, Object.assign({}, m_options, options));
     };
 
-    /*
-     * Define built-in dependencies.
-     *
-     * DOMContentLoaded must be attached synchronously.
-     *
-     * FIXME this is wrong if an instance is defined asynchronously. Should
-     * be global!
-     */
-    var m_domReady = new Promise(function (resolve) {
-	document.addEventListener('DOMContentLoaded', resolve);
-    });
-    define('domReady', function () {
-	return function (func) { m_domReady.then(func); };
-    });
-
     define.amd = {};
     return define;
 }(this, { 'baseUrl': '', 'paths': {} }));

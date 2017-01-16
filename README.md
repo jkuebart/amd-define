@@ -34,14 +34,27 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 \[[see](examples/hello-d3.html)\]
 
 
-Built-in dependencies
----------------------
+Built-in pseudo-modules
+-----------------------
 
-The [`domReady`][DR] dependency is built-in. The reason is that it is
-usually too late to attach to the `DOMContentLoaded` event by the time a
-module is loaded asynchronously.
+One built-in pseudo-module is `exports`. When specified as a dependency, a
+new object is created and passed to the module function. This object will
+later become the module and it is expected that the module function defines
+anything it wishes to export as properties on this object. The return value
+of the module function is ignored in this case.
 
-This is how it's used:
+```js
+define([ 'exports' ], function (exports) {
+    exports.f = function () {};
+});
+```
+
+
+Included modules
+----------------
+
+The [`domReady`][DR] module is included in this project. This is how it's
+used:
 
 ```html
 <!doctype html>
@@ -57,18 +70,6 @@ This is how it's used:
 ```
 \[[see](examples/domReady.html)\]
 
-
-Another built-in pseudo-module is `exports`. When specified as a
-dependency, a new object is created and passed to the module function. This
-object will later become the module and it is expected that the module
-function defines anything it wishes to export as properties on this object.
-The return value of the module function is ignored in this case.
-
-```js
-define([ 'exports' ], function (exports) {
-    exports.f = function () {};
-});
-```
 
 
 Libraries

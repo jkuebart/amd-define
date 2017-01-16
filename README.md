@@ -37,9 +37,9 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 Built-in pseudo-modules
 -----------------------
 
-One provided pseudo-module is `module`. When specified as a dependency, an
-object is passed to the module function. The object contains a property
-named `exports` which references a newly created object.
+One provided pseudo-module is [`module`][CJS]. When specified as a
+dependency, an object is passed to the module function. The object contains
+a property named `exports` which references a newly created object.
 
 If the module function's return value is [falsy][FLS], then the object
 referenced by the `exports` property at the time the module function
@@ -70,8 +70,9 @@ define([ 'exports' ], function (exports) {
 Included modules
 ----------------
 
-The [`domReady`][DR] module is included in this project. This is how it's
-used:
+The [`domReady`][DR] module is included in this project. It evaluates to a
+function that will invoke its argument exactly once after the DOM has
+loaded completely. This is how it's used:
 
 ```html
 <!doctype html>
@@ -205,8 +206,7 @@ There are certainly a lot of unimplemented features – in fact, everything
 that isn't mentioned above. For example, no normalisation is performed on
 module IDs, so names containing `.` or `..` elements will be treated
 incorrectly. Most notably missing are [loader plugins][PLUG]. There's also
-no support for the special dependencies [`require`][REQ0] and
-[`module`][CJS].
+no support for the special dependency [`require`][REQ0].
 
 And don't even get me started about »[source scanning][REQ1]« to support
 `require`…
@@ -255,7 +255,7 @@ make obj
 make all install
 ```
 
-On other platforms, you can use [bmake][MAKE], for example.
+On other platforms you can use [bmake][MAKE], for example.
 
 The build uses [UglifyJS2][UJS]. If not installed globally, set the
 `UGLIFYJS` environment variable to its location.

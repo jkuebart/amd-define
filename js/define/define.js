@@ -156,8 +156,8 @@ var define = (function ctor(m_global, m_options) {
      * invoke it with the optional dependencies listed in `env`.
      */
     function define(id, env, mod) {
-	// The 'exports' object if the module uses it.
-	var exports;
+	// The 'module' object if the module requests it.
+	var module;
 
 	// Capture the hierarchy of modules currently being defined.
 	var defining = m_registry.context() || stack();
@@ -185,16 +185,18 @@ var define = (function ctor(m_global, m_options) {
 	} else {
 	    m_registry.put(id,
 		Promise.all(env.map(function (dep) {
-		    if ('exports' === dep) {
-			return exports = exports || {};
+		    if ('exports' === dep || 'module' === dep) {
+			if (!module) {
+			    module = { 'exports': {} };
+			}
+			return 'e' === dep[0] ? module.exports : module;
 		    }
 		    if (defining.includes(dep)) {
 			throw err('define', 'circular dependency', defining.push(dep));
 		    }
 		    return m_registry.get(dep, defining.push(dep));
 		})).then(function (deps) {
-		    var res = mod.apply(void 0, deps);
-		    return exports || res;
+		    return mod.apply(void 0, deps) || module && module.exports;
 		})
 	    );
 	}

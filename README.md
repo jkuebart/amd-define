@@ -37,14 +37,31 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 Built-in pseudo-modules
 -----------------------
 
-One built-in pseudo-module is `exports`. When specified as a dependency, a
-new object is created and passed to the module function. This object will
-later become the module and it is expected that the module function defines
-anything it wishes to export as properties on this object. The return value
-of the module function is ignored in this case.
+One provided pseudo-module is `module`. When specified as a dependency, an
+object is passed to the module function. The object contains a property
+named `exports` which references a newly created object.
+
+If the module function's return value is [falsy][FLS], then the object
+referenced by the `exports` property at the time the module function
+returns will become the module and the module function is expected to
+define anything it wishes to export on this object.
+
+```js
+define([ 'module' ], function (module) {
+    // This module exports one function.
+    module.exports.f = function () {};
+});
+```
+
+
+Another pseudo-module is `exports`. When specified as a dependency, a new
+object is created and passed to the module function. If the module
+function's return value is [falsy][FLS] and the `module` pseudo-dependency
+has not been requested, then this object will become the module.
 
 ```js
 define([ 'exports' ], function (exports) {
+    // This module exports one function.
     exports.f = function () {};
 });
 ```
@@ -219,6 +236,7 @@ write your own :P
 [CYC]:  http://www.requirejs.org/docs/api.html#circular
 [DR]:   http://www.requirejs.org/docs/api.html#pageload
 [ES6]:  http://www.ecma-international.org/ecma-262/6.0/
+[FLS]:  https://github.com/requirejs/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#how-does-it-work
 [PLUG]: https://github.com/amdjs/amdjs-api/blob/master/LoaderPlugins.md
 [REQ0]: https://github.com/amdjs/amdjs-api/blob/master/require.md
 [REQ1]: http://www.requirejs.org/docs/whyamd.html#sugar

@@ -107,13 +107,13 @@ var define = (function ctor(m_global, m_options) {
 		     * instance of `define` for the duration of evaluating
 		     * the module.
 		     */
-		    m_global.define = define;
+		    m_global['define'] = define;
 		    m_context = context;
 		    try {
 			geval(text);
 		    } finally {
 			m_context = void 0;
-			m_global.define = gdef;
+			m_global['define'] = gdef;
 			// Reject Promise if module is still unresoled.
 			module.reject(err('define', 'unresolved dependency', id));
 		    }
@@ -189,14 +189,14 @@ var define = (function ctor(m_global, m_options) {
 			if (!module) {
 			    module = { 'exports': {} };
 			}
-			return 'e' === dep[0] ? module.exports : module;
+			return 'e' === dep[0] ? module['exports'] : module;
 		    }
 		    if (defining.includes(dep)) {
 			throw err('define', 'circular dependency', defining.push(dep));
 		    }
 		    return m_registry.get(dep, defining.push(dep));
 		})).then(function (deps) {
-		    return mod.apply(void 0, deps) || module && module.exports;
+		    return mod.apply(void 0, deps) || module && module['exports'];
 		})
 	    );
 	}
@@ -222,10 +222,10 @@ var define = (function ctor(m_global, m_options) {
     /**
      * Return a new loader with a modified configuration.
      */
-    define.config = function (options) {
+    define['config'] = function (options) {
 	return ctor(m_global, Object.assign({}, m_options, options));
     };
 
-    define.amd = {};
+    define['amd'] = {};
     return define;
 }(this, { 'baseUrl': '', 'paths': {} }));

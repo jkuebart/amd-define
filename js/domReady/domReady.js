@@ -47,7 +47,7 @@ define(function () {
 	s_domReady.then(function () { func(document); });
     }
 
-    self.load = function (id, require, onLoad) {
+    self['load'] = function (id, require, onLoad) {
 	return self(onLoad);
     };
 

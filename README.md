@@ -1,5 +1,5 @@
-AMD-Define
-==========
+dietAMD
+=======
 
 So here it is – my submission to the [AMD loader][AMD] fray.
 
@@ -23,7 +23,7 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 
 ```html
 <!doctype html>
-<title>AMD-Define example</title>
+<title>dietAMD example</title>
 <script src="define.js"></script>
 <script>
     define([ 'https://d3js.org/d3.v4.min' ], function (d3) {
@@ -76,7 +76,7 @@ loaded completely. This is how it's used:
 
 ```html
 <!doctype html>
-<title>AMD-Define example</title>
+<title>dietAMD example</title>
 <script src="define.js"></script>
 <script>
     define([ 'domReady' ], function (domReady) {

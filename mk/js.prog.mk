@@ -28,24 +28,24 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 .SUFFIXES:
-.SUFFIXES:	.js .map -src.js
+.SUFFIXES:	.js -src.js
 
 UGLIFYJS	?=	uglifyjs
 UGLIFYJSFLAGS	?=	-c -m -v
 
 SRCS		?=	${PROG_JS}
-MAP		?=	${PROG_JS:.js=.map}
+MAP		?=	${PROG_JS:=.map}
 DISTSRCS	?=	${SRCS:.js=-src.js}
 
-CLEANFILES	+=	${PROG_JS} ${MAP} ${DISTSRCS}
+MINI		=	${PROG_JS:.js=-out.js}
+
+CLEANFILES	+=	${MINI} ${MAP} ${DISTSRCS}
 
 JSOWN		?=	${SHAREOWN}
 JSGRP		?=	${SHAREGRP}
 JSMODE		?=	${SHAREMODE}
 
-# Depend on the map file because the minified output may have the same name
-# as one of the sources, which confuses make(1).
-all:		${MAP}
+all:		${MINI} ${MAP} ${DISTSRCS}
 
 .PHONY:		install
 install:
@@ -57,21 +57,17 @@ install:
 		fi; \
 	fi
 	${INSTALL} -o ${JSOWN} -g ${JSGRP} -m ${JSMODE} \
-		${PROG_JS} ${MAP} ${DISTSRCS} ${DESTDIR}${JSDIR}
-
-# Bail out if running without .OBJDIR because we'd overwrite sources.
-.BEGIN:
-.if !make(obj) && ${.OBJDIR} == ${.CURDIR}
-.error First do make obj
-.endif
+		${MINI} ${DESTDIR}${JSDIR}/${PROG_JS}
+	${INSTALL} -o ${JSOWN} -g ${JSGRP} -m ${JSMODE} \
+		${MAP} ${DISTSRCS} ${DESTDIR}${JSDIR}
 
 .js-src.js:
 	cp -p ${.IMPSRC} ${.TARGET}
 
-${MAP}: ${DISTSRCS}
+${MINI}: ${DISTSRCS}
 	${UGLIFYJS} ${UGLIFYJSFLAGS} \
-		-o ${.TARGET:.map=.js} \
-		--source-map ${.TARGET} \
+		-o ${.TARGET} \
+		--source-map ${MAP} \
 		-- ${.ALLSRC}
 
 .include <bsd.obj.mk>

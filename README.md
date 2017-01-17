@@ -25,7 +25,7 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 <!doctype html>
 <title>AMD-Define example</title>
 <script src="define.js"></script>
-<script type="text/javascript">
+<script>
     define([ 'https://d3js.org/d3.v4.min' ], function (d3) {
         d3.select('body').text('Hello, D3!');
     });
@@ -78,7 +78,7 @@ loaded completely. This is how it's used:
 <!doctype html>
 <title>AMD-Define example</title>
 <script src="define.js"></script>
-<script type="text/javascript">
+<script>
     define([ 'domReady' ], function (domReady) {
         domReady(function () {
             document.write('hello, world!');

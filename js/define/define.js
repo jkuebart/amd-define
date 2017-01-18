@@ -69,10 +69,16 @@ var define = (function ctor(m_global, m_options) {
 
     // The registry of resolved modules
     var m_registry = (function () {
-	var m_context, self = {};
+	var self = {};
 
 	// Promises for each loaded module.
 	var m_modules = {};
+
+	// A buffer for define() invocations.
+	var m_defines = [];
+
+	// A function to kick off resolving.
+	var m_start;
 
 	function load(url) {
 	    var xhr = new XMLHttpRequest();
@@ -92,9 +98,9 @@ var define = (function ctor(m_global, m_options) {
 
 	/**
 	 * Return (a promise for) the requested module. The context will be
-	 * available via `context()` while the body is being evaluated.
+	 * used when processing defines from the loaded module.
 	 */
-	self.get = function (id, context) {
+	function get(id, context) {
 	    var module;
 
 	    if (!m_modules[id]) {
@@ -108,12 +114,14 @@ var define = (function ctor(m_global, m_options) {
 		     * the module.
 		     */
 		    m_global['define'] = define;
-		    m_context = context;
+		    // Prevent starting the resolver as we will run it later.
+		    m_start = function () {};
 		    try {
 			geval(text);
 		    } finally {
-			m_context = void 0;
 			m_global['define'] = gdef;
+			// Call resolver directly to clear the queue.
+			resolver(context.push(id));
 			// Reject Promise if module is still unresoled.
 			module.reject(err('define', 'unresolved dependency', id));
 		    }
@@ -127,17 +135,13 @@ var define = (function ctor(m_global, m_options) {
 		});
 	    }
 	    return m_modules[id].module;
-	};
-
-	self.context = function () {
-	    return m_context;
-	};
+	}
 
 	/**
 	 * Store the given object at the module id. If the id is already in
 	 * use, the request is ignored.
 	 */
-	self.put = function (id, mod) {
+	function put(id, mod) {
 	    if (id) {
 		if (!m_modules[id]) {
 		    m_modules[id] = { 'module': mod };
@@ -146,6 +150,54 @@ var define = (function ctor(m_global, m_options) {
 		}
 	    }
 	    return self;
+	}
+
+	/**
+	 * Process buffered `define` calls.
+	 */
+	function resolver(context) {
+	    var defines = m_defines;
+	    m_defines = [];
+
+	    context = context || stack();
+	    defines.forEach(function (mod) {
+		// The 'module' object if the dependencies request it.
+		var module;
+
+		put(mod.id || !context.empty() && context.top(),
+		    // Optimise for pure object module.
+		    'function' !== typeof mod.mod	? mod.mod :
+
+		    // Optimise for dependency-free module.
+		    !mod.env.length			? mod.mod.call(void 0) :
+
+		    // Resolve dependencies in the general case.
+		    Promise.all(mod.env.map(function (dep) {
+			if ('exports' === dep || 'module' === dep) {
+			    module = module || { 'exports': {} };
+			    return 'e' === dep[0] ? module['exports'] : module;
+			}
+			if (context.includes(dep)) {
+			    throw err('define', 'circular dependency', context.push(dep));
+			}
+			return get(dep, context);
+		    })).then(function (deps) {
+			return mod.mod.apply(void 0, deps)
+			    || module && module.exports;
+		    })
+		);
+	    });
+
+	    new Promise(function (resolve) {
+		m_start = resolve;
+	    }).then(resolver);
+	}
+	resolver();
+
+	self.define = function (id, env, mod) {
+	    m_defines.push({ 'id': id, 'env': env, 'mod': mod });
+	    // Call m_start to start resolving after this script finishes.
+	    m_start();
 	};
 
 	return self;
@@ -156,12 +208,6 @@ var define = (function ctor(m_global, m_options) {
      * invoke it with the optional dependencies listed in `env`.
      */
     function define(id, env, mod) {
-	// The 'module' object if the module requests it.
-	var module;
-
-	// Capture the hierarchy of modules currently being defined.
-	var defining = m_registry.context() || stack();
-
 	// Sort out the arguments.
 	if (arguments.length < 3) {
 	    mod = arguments[arguments.length - 1];
@@ -175,32 +221,7 @@ var define = (function ctor(m_global, m_options) {
 	    }
 	}
 
-	id = id || !defining.empty() && defining.top();
-	if ('function' !== typeof mod) {
-	    // optimize for pure object module
-	    m_registry.put(id, mod);
-	} else if (!env.length) {
-	    // optimize for dependency-free module
-	    m_registry.put(id, mod());
-	} else {
-	    m_registry.put(id,
-		Promise.all(env.map(function (dep) {
-		    if ('exports' === dep || 'module' === dep) {
-			if (!module) {
-			    module = { 'exports': {} };
-			}
-			return 'e' === dep[0] ? module['exports'] : module;
-		    }
-		    if (defining.includes(dep)) {
-			throw err('define', 'circular dependency', defining.push(dep));
-		    }
-		    return m_registry.get(dep, defining.push(dep));
-		})).then(function (deps) {
-		    return mod.apply(void 0, deps) || module && module['exports'];
-		})
-	    );
-	}
-
+	m_registry.define(id, env, mod);
 	return define;
     }
 

@@ -209,14 +209,14 @@ var define = (function ctor(m_global, m_options) {
 	var prefix;
 	var ext = id.substr(lastIndexOf(id.substr(1 + id.lastIndexOf('/')), '.'));
 	id = id.substr(0, id.length - ext.length);
-	for (prefix in m_options.paths) {
-	    if ({}.hasOwnProperty.call(m_options.paths, prefix) &&
+	for (prefix in m_options['paths']) {
+	    if ({}.hasOwnProperty.call(m_options['paths'], prefix) &&
 		(id === prefix || id.startsWith(prefix + '/')))
 	    {
-		id = m_options.paths[prefix] + id.substr(prefix.length);
+		id = m_options['paths'][prefix] + id.substr(prefix.length);
 	    }
 	}
-	return (m_isAbs.test(id) ? '' : m_options.baseUrl) + id + ext;
+	return (m_isAbs.test(id) ? '' : m_options['baseUrl']) + id + ext;
     }
 
     /**

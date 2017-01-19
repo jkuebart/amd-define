@@ -81,7 +81,7 @@ var define = (function () {
 	// Promises for each loaded module.
 	var m_modules = {};
 
-	self.toUrl = function (id) {
+	function toUrl(id) {
 	    var prefix;
 	    var ext = id.substr(lastIndexOf(id.substr(1 + id.lastIndexOf('/')), '.'));
 	    id = id.substr(0, id.length - ext.length);
@@ -93,33 +93,7 @@ var define = (function () {
 		}
 	    }
 	    return (s_isAbs.test(id) ? '' : options['baseUrl']) + id + ext;
-	};
-
-	/**
-	 * Invoke @func if module @id hasn't been declared or defined.
-	 */
-	self.declare = function (id, func) {
-	    var module = m_modules[id];
-
-	    if (!module) {
-		module = m_modules[id] = {};
-		module.module = new Promise(function (resolve, reject) {
-		    module.resolve = resolve;
-		    module.reject = reject;
-		    func();
-		});
-	    }
-
-	    return module.module;
-	};
-
-	/**
-	 * Signal failure @reason when loading the module @id. The @id must
-	 * have been previously declared.
-	 */
-	self.failure = function (id, reason) {
-	    m_modules[id].reject(reason);
-	};
+	}
 
 	/**
 	 * Define module @id as @mod. Ignored if @id is already defined.
@@ -136,6 +110,47 @@ var define = (function () {
 	};
 
 	/**
+	 * Return (a promise for) the requested module. The context will be
+	 * used when processing defines from the loaded module.
+	 */
+	self.get = function (id, context) {
+	    var script, module = m_modules[id];
+
+	    function handleLoad(evt) {
+		document.head.removeChild(script);
+		script.removeEventListener('error', handleLoad);
+		script.removeEventListener('load', handleLoad);
+
+		// Call resolver directly to clear the queue.
+		resolver(context.push({ 'id': id, 'repo': self }));
+
+		if ('error' === evt.type) {
+		    module.reject(err('define', id, 'load error'));
+		} else {
+		    // Reject Promise if module is still unresoled.
+		    module.reject(err('define', 'unresolved dependency', id));
+		}
+	    }
+
+	    if (!module) {
+		// Create a Promise that resolves when the module is defined.
+		module = m_modules[id] = {};
+		module.module = new Promise(function (resolve, reject) {
+		    module.resolve = resolve;
+		    module.reject = reject;
+		});
+
+		script = document.createElement('script');
+		script.setAttribute('src', toUrl(id +'.js'));
+		script.addEventListener('error', handleLoad);
+		script.addEventListener('load', handleLoad);
+		document.head.appendChild(script);
+	    }
+
+	    return module.module;
+	};
+
+	/**
 	 * Return a new repository with modified options.
 	 */
 	self.config = function (opts) {
@@ -145,39 +160,6 @@ var define = (function () {
 	return self;
     }
     var m_defaultRepo = repository({ 'baseUrl': '', 'paths': {} });
-
-    /**
-     * Return (a promise for) the requested module. The context will be
-     * used when processing defines from the loaded module.
-     */
-    function get(id, repo, context) {
-	var script;
-
-	function handleLoad(evt) {
-	    document.head.removeChild(script);
-	    script.removeEventListener('error', handleLoad);
-	    script.removeEventListener('load', handleLoad);
-
-	    // Call resolver directly to clear the queue.
-	    resolver(context.push({ 'id': id, 'repo': repo }));
-
-	    if ('error' === evt.type) {
-		repo.failure(id, err('define', id, 'load error'));
-	    } else {
-		// Reject Promise if module is still unresoled.
-		repo.failure(id, err('define', 'unresolved dependency', id));
-	    }
-	}
-
-	// Create a Promise that resolves when the module is defined.
-	return repo.declare(id, function () {
-	    script = document.createElement('script');
-	    script.setAttribute('src', repo.toUrl(id +'.js'));
-	    script.addEventListener('error', handleLoad);
-	    script.addEventListener('load', handleLoad);
-	    document.head.appendChild(script);
-	});
-    }
 
     // A buffer for define() invocations.
     var m_defines = [];
@@ -217,7 +199,7 @@ var define = (function () {
 			    }).push(dep)
 			);
 		    }
-		    return get(dep, repo, context);
+		    return repo.get(dep, context);
 		})).then(function (deps) {
 		    return mod.mod.apply(void 0, deps)
 			|| module && module.exports;

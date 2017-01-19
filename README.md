@@ -126,31 +126,34 @@ Configuration
 -------------
 
 The configuration is very minimal. The `config` method returns a new loader
-with a modified configuration which may be used to replace the global
-instance:
+with the specified configuration which can be used without affecting the
+global environment. Modules will *inherit* the loader they were loaded with
+when resolving their dependencies.
 
 ```js
+// Create a loader for a specific baseUrl.
+var libDefine = define.config({ 'baseUrl': 'lib/' });
+libDefine([ 'mod' ], function (mod) {});
+```
+
+The loaders created by `config` are completely independent of each other.
+This means that even modules that have already been loaded will be loaded
+again when a new loader is created. This is necessary because a module's
+dependencies might be resolved differently under a new configuration.
+
+The global `define` is special in that it resolves dependencies using the
+»most recent« loader on the dependency chain. Installing a configured
+loader globally isn't recommended as it will break this behaviour. Even
+dependencies of a module loaded using a specially configured loader will
+then always use this global instance instead of the one they inherit.
+
+```js
+// Not recommended!
 define = define.config({
     'paths': { 'd3': 'https://d3js.org/d3.v4.min' },
 });
 ```
 
-It's also possible to use the customised loader without affecting the
-global environment. Modules loaded this way will then use the *modified*
-loader as the global instance when their dependencies are resolved.
-
-```js
-(function () {
-   // This function uses a specially configured loader.
-   var lib1 = define.config({ 'baseUrl': 'lib1/' });
-   lib1([ 'mod1' ], function (mod1) {});
-}());
-```
-
-The loaders created by `config` are completely independent of each other.
-This means that even modules that have already been loaded will be loaded
-again by other loader instances. This is necessary because their
-dependencies might be resolved differently under the new configuration.
 
 The configuration options and their meanings are:
 

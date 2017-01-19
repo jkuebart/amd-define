@@ -29,8 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-var define = (function ctor(m_global, m_options) {
+var define = (function () {
     'use strict';
+    var s_isAbs = RegExp('^(/|[-+.A-Za-z0-9]+:)'); // Test for absolute paths
 
     // Construct an Error from the arguments.
     function err() {
@@ -48,7 +49,8 @@ var define = (function ctor(m_global, m_options) {
 
 	emptyStack.empty = function () { return true; };
 	emptyStack.toString = function () { return ''; };
-	emptyStack.includes = function () { return false; };
+	emptyStack.some = function () {};
+	emptyStack.map = function () { return emptyStack; };
 
 	emptyStack.push = function (item) {
 	    var next = this, self = Object.create(emptyStack);
@@ -56,8 +58,11 @@ var define = (function ctor(m_global, m_options) {
 	    self.pop = function () { return next; };
 	    self.empty = function () { return false; };
 	    self.toString = function () { return item +', '+ next; };
-	    self.includes = function (i) {
-		return i === item || next.includes(i);
+	    self.some = function (func) {
+		return func(item) || next.some(func);
+	    };
+	    self.map = function (func) {
+		return next.map(func).push(func(item));
 	    };
 	    return self;
 	};
@@ -67,81 +72,59 @@ var define = (function ctor(m_global, m_options) {
 	};
     }());
 
-    // The registry of resolved modules
-    var m_registry = (function () {
+    /**
+     * A container of modules loaded with a specific set of options.
+     */
+    function repository(options) {
 	var self = {};
 
 	// Promises for each loaded module.
 	var m_modules = {};
 
-	// A buffer for define() invocations.
-	var m_defines = [];
-
-	// A function to kick off resolving.
-	var m_start;
-
-	function load(url) {
-	    var xhr = new XMLHttpRequest();
-
-	    xhr.open('GET', url, true);
-	    return new Promise(function (resolve, reject) {
-	       xhr.onload = function () {
-		    if (200 === this.status) {
-			resolve(this.response);
-		    } else {
-			reject(err(url, this.status, this.statusText));
-		    }
-	       };
-	       xhr.send();
-	    });
-	}
+	self.toUrl = function (id) {
+	    var prefix;
+	    var ext = id.substr(lastIndexOf(id.substr(1 + id.lastIndexOf('/')), '.'));
+	    id = id.substr(0, id.length - ext.length);
+	    for (prefix in options['paths']) {
+		if ({}.hasOwnProperty.call(options['paths'], prefix) &&
+		    (id === prefix || id.startsWith(prefix + '/')))
+		{
+		    id = options['paths'][prefix] + id.substr(prefix.length);
+		}
+	    }
+	    return (s_isAbs.test(id) ? '' : options['baseUrl']) + id + ext;
+	};
 
 	/**
-	 * Return (a promise for) the requested module. The context will be
-	 * used when processing defines from the loaded module.
+	 * Invoke @func if module @id hasn't been declared or defined.
 	 */
-	function get(id, context) {
-	    var module;
+	self.declare = function (id, func) {
+	    var module = m_modules[id];
 
-	    if (!m_modules[id]) {
-		// Load and execute the module script.
-		load(idToUrl(id +'.js')).then(function (text) {
-		    var geval = eval, gdef = m_global.define;
-
-		    /*
-		     * We modify the global environment to point to this
-		     * instance of `define` for the duration of evaluating
-		     * the module.
-		     */
-		    m_global['define'] = define;
-		    // Prevent starting the resolver as we will run it later.
-		    m_start = function () {};
-		    try {
-			geval(text);
-		    } finally {
-			m_global['define'] = gdef;
-			// Call resolver directly to clear the queue.
-			resolver(context.push(id));
-			// Reject Promise if module is still unresoled.
-			module.reject(err('define', 'unresolved dependency', id));
-		    }
-		});
-
-		// Create a Promise that resolves when the module is defined.
+	    if (!module) {
 		module = m_modules[id] = {};
 		module.module = new Promise(function (resolve, reject) {
 		    module.resolve = resolve;
 		    module.reject = reject;
+		    func();
 		});
 	    }
-	    return m_modules[id].module;
-	}
+
+	    return module.module;
+	};
 
 	/**
-	 * Store the given object at the module id. If the id is already in
-	 * use, the request is ignored.
+	 * Signal failure @reason when loading the module @id. The @id must
+	 * have been previously declared.
 	 */
-	function put(id, mod) {
+	self.failure = function (id, reason) {
+	    m_modules[id].reject(reason);
+	};
+
+	/**
+	 * Define module @id as @mod. Ignored if @id is already defined.
+	 */
+	self.define = function (id, mod) {
 	    if (id) {
 		if (!m_modules[id]) {
 		    m_modules[id] = { 'module': mod };
@@ -150,103 +133,154 @@ var define = (function ctor(m_global, m_options) {
 		}
 	    }
 	    return self;
-	}
+	};
 
 	/**
-	 * Process buffered `define` calls.
+	 * Return a new repository with modified options.
 	 */
-	function resolver(context) {
-	    var defines = m_defines;
-	    m_defines = [];
-
-	    context = context || stack();
-	    defines.forEach(function (mod) {
-		// The 'module' object if the dependencies request it.
-		var module;
-
-		put(mod.id || !context.empty() && context.top(),
-		    // Optimise for pure object module.
-		    'function' !== typeof mod.mod	? mod.mod :
-
-		    // Optimise for dependency-free module.
-		    !mod.env.length			? mod.mod.call(void 0) :
-
-		    // Resolve dependencies in the general case.
-		    Promise.all(mod.env.map(function (dep) {
-			if ('exports' === dep || 'module' === dep) {
-			    module = module || { 'exports': {} };
-			    return 'e' === dep[0] ? module['exports'] : module;
-			}
-			if (context.includes(dep)) {
-			    throw err('define', 'circular dependency', context.push(dep));
-			}
-			return get(dep, context);
-		    })).then(function (deps) {
-			return mod.mod.apply(void 0, deps)
-			    || module && module.exports;
-		    })
-		);
-	    });
-
-	    new Promise(function (resolve) {
-		m_start = resolve;
-	    }).then(resolver);
-	}
-	resolver();
-
-	self.define = function (id, env, mod) {
-	    m_defines.push({ 'id': id, 'env': env, 'mod': mod });
-	    // Call m_start to start resolving after this script finishes.
-	    m_start();
+	self.config = function (opts) {
+	    return repository(Object.assign({}, options, opts));
 	};
 
 	return self;
-    }());
+    }
+    var m_defaultRepo = repository({ 'baseUrl': '', 'paths': {} });
+
+    function load(url) {
+	var xhr = new XMLHttpRequest();
+
+	xhr.open('GET', url);
+	return new Promise(function (resolve, reject) {
+	   xhr.onload = function () {
+		if (200 === this.status) {
+		    resolve(this.response);
+		} else {
+		    reject(err(url, this.status, this.statusText));
+		}
+	   };
+	   xhr.send();
+	});
+    }
 
     /**
-     * Define module `mod` with the optional `id`. If `mod` is a function,
-     * invoke it with the optional dependencies listed in `env`.
+     * Return (a promise for) the requested module. The context will be
+     * used when processing defines from the loaded module.
      */
-    function define(id, env, mod) {
-	// Sort out the arguments.
-	if (arguments.length < 3) {
-	    mod = arguments[arguments.length - 1];
-	    if (arguments.length < 2 || 'string' === typeof id) {
-		env = [];
-	    } else { // 2 <= arguments.length && 'string' !== typeof id
-		env = id;
+    function get(id, repo, context) {
+	// Create a Promise that resolves when the module is defined.
+	return repo.declare(id, function () {
+	    // Load and execute the module script.
+	    load(repo.toUrl(id +'.js')).then(function (text) {
+		var geval = eval;
+
+		// Prevent starting the resolver as we will run it later.
+		m_start = function () {};
+		try {
+		    geval(text);
+		} finally {
+		    // Call resolver directly to clear the queue.
+		    resolver(context.push({ 'id': id, 'repo': repo }));
+		    // Reject Promise if module is still unresoled.
+		    repo.failure(id, err('define', 'unresolved dependency', id));
+		}
+	    });
+	});
+    }
+
+    // A buffer for define() invocations.
+    var m_defines = [];
+
+    // A function to kick off resolving.
+    var m_start;
+
+    /**
+     * Process buffered `define` calls.
+     */
+    function resolver(context) {
+	var defines = m_defines, ctx;
+	m_defines = [];
+
+	context = context || stack();
+	ctx = context.empty() ? {} : context.top();
+	defines.forEach(function (mod) {
+	    var repo = mod.repo || ctx.repo || m_defaultRepo;
+
+	    // The 'module' object if the dependencies request it.
+	    var module;
+
+	    repo.define(mod.id || ctx.id,
+		// Optimise for pure object module.
+		'function' !== typeof mod.mod	? mod.mod :
+
+		// Optimise for dependency-free module.
+		!mod.env.length			? mod.mod.call(void 0) :
+
+		// Resolve dependencies in the general case.
+		Promise.all(mod.env.map(function (dep) {
+		    if ('exports' === dep || 'module' === dep) {
+			module = module || { 'exports': {} };
+			return 'e' === dep[0] ? module['exports'] : module;
+		    }
+		    if (context.some(function (c) { return dep === c.id; })) {
+			throw err('define', 'circular dependency',
+			    context.map(function (c) {
+				return c.id;
+			    }).push(dep)
+			);
+		    }
+		    return get(dep, repo, context);
+		})).then(function (deps) {
+		    return mod.mod.apply(void 0, deps)
+			|| module && module.exports;
+		})
+	    );
+	});
+
+	new Promise(function (resolve) {
+	    m_start = resolve;
+	}).then(resolver);
+    }
+    resolver();
+
+    /**
+     * Create a `define` method with an optional @repo. If no @repo is
+     * specified, modules will be inserted into the 'most recent'
+     * repository on the dependency chain.
+     */
+    function definer(repo) {
+	/**
+	 * Define module `mod` with the optional `id`. If `mod` is a function,
+	 * invoke it with the optional dependencies listed in `env`.
+	 */
+	function define(id, env, mod) {
+	    // Sort out the arguments.
+	    if (arguments.length < 3) {
+		mod = arguments[arguments.length - 1];
+		if (arguments.length < 2 || 'string' === typeof id) {
+		    env = [];
+		} else { // 2 <= arguments.length && 'string' !== typeof id
+		    env = id;
+		}
+		if (arguments.length < 2 || 'string' !== typeof id) {
+		    id = void 0;
+		}
 	    }
-	    if (arguments.length < 2 || 'string' !== typeof id) {
-		id = void 0;
-	    }
+	    m_defines.push({ 'id': id, 'env': env, 'mod': mod, 'repo': repo });
+
+	    // Call m_start to start resolving after this script finishes.
+	    m_start();
 	}
 
-	m_registry.define(id, env, mod);
+	/**
+	 * Return a new loader with a modified configuration.
+	 */
+	define['config'] = function (options) {
+	    return definer((repo || m_defaultRepo).config(options));
+	};
+
+	define['amd'] = {};
 	return define;
     }
 
-    var m_isAbs = RegExp('^(/|[-+.A-Za-z0-9]+:)'); // Test for absolute paths
-    function idToUrl(id) {
-	var prefix;
-	var ext = id.substr(lastIndexOf(id.substr(1 + id.lastIndexOf('/')), '.'));
-	id = id.substr(0, id.length - ext.length);
-	for (prefix in m_options['paths']) {
-	    if ({}.hasOwnProperty.call(m_options['paths'], prefix) &&
-		(id === prefix || id.startsWith(prefix + '/')))
-	    {
-		id = m_options['paths'][prefix] + id.substr(prefix.length);
-	    }
-	}
-	return (m_isAbs.test(id) ? '' : m_options['baseUrl']) + id + ext;
-    }
-
-    /**
-     * Return a new loader with a modified configuration.
-     */
-    define['config'] = function (options) {
-	return ctor(m_global, Object.assign({}, m_options, options));
-    };
-
-    define['amd'] = {};
-    return define;
-}(this, { 'baseUrl': '', 'paths': {} }));
+    return definer();
+}());

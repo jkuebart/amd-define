@@ -37,9 +37,37 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 Built-in pseudo-modules
 -----------------------
 
-One provided pseudo-module is [`module`][CJS]. When specified as a
-dependency, an object is passed to the module function. The object contains
-a property named `exports` which references a newly created object.
+One provided pseudo-module is [`require`][REQ0]. When specified as a
+dependency, a function is passed to the module function. This function may
+be used to request further dependencies by passing an array of module IDs
+and a callback to be invoked with the requested modules.
+
+This can be used to load modules dynamically, for example based on some
+runtime conditions.
+
+```js
+define([ 'require' ], function (require) {
+    require([ 'mod' ], function (mod) {
+        // Use the requested module.
+    });
+});
+```
+
+As an extension to the AMD standard, if no callback is passed to `require`,
+a [Promise][PRM] for an array of dependencies will be returned.
+
+```js
+define([ 'require' ], function (require) {
+    require([ 'mod' ]).then(function (deps) {
+        // The requested module is in deps[0].
+    });
+});
+```
+
+
+Another pseudo-module is [`module`][CJS]. When specified as a dependency,
+an object is passed to the module function. The object contains a property
+named `exports` which references a newly created object.
 
 If the module function's return value is [falsy][FLS], then the object
 referenced by the `exports` property at the time the module function
@@ -54,7 +82,7 @@ define([ 'module' ], function (module) {
 ```
 
 
-Another pseudo-module is `exports`. When specified as a dependency, a new
+A third pseudo-module is `exports`. When specified as a dependency, a new
 object is created and passed to the module function. If the module
 function's return value is [falsy][FLS] and the `module` pseudo-dependency
 has not been requested, then this object will become the module.
@@ -65,6 +93,12 @@ define([ 'exports' ], function (exports) {
     exports.f = function () {};
 });
 ```
+
+
+If `define` is called with a module function that expects arguments (i.e.
+has a non-zero length), but without specifying any dependencies, then the
+dependencies `[ 'require', 'exports', 'module' ]` are passed to the module
+function.
 
 
 Included modules
@@ -208,8 +242,7 @@ Limitations
 There are certainly a lot of unimplemented features – in fact, everything
 that isn't mentioned above. For example, no normalisation is performed on
 module IDs, so names containing `.` or `..` elements will be treated
-incorrectly. Most notably missing are [loader plugins][PLUG]. There's also
-no support for the special dependency [`require`][REQ0].
+incorrectly. Most notably missing are [loader plugins][PLUG].
 
 And don't even get me started about »[source scanning][REQ1]« to support
 `require`…
@@ -241,6 +274,7 @@ write your own :P
 [ES6]:  http://www.ecma-international.org/ecma-262/6.0/
 [FLS]:  https://github.com/requirejs/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#how-does-it-work
 [PLUG]: https://github.com/amdjs/amdjs-api/blob/master/LoaderPlugins.md
+[PRM]:  http://www.ecma-international.org/ecma-262/6.0/#sec-promise-objects
 [REQ0]: https://github.com/amdjs/amdjs-api/blob/master/require.md
 [REQ1]: http://www.requirejs.org/docs/whyamd.html#sugar
 [UMD]:  https://github.com/umdjs/umd

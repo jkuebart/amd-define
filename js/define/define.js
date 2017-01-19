@@ -32,6 +32,7 @@
 var define = (function () {
     'use strict';
     var s_isAbs = RegExp('^(/|[-+.A-Za-z0-9]+:)'); // Test for absolute paths
+    var s_rem = [ 'require', 'exports', 'module' ];
 
     // Construct an Error from the arguments.
     function err() {
@@ -100,6 +101,7 @@ var define = (function () {
 	    }
 	    return (s_isAbs.test(id) ? '' : options['baseUrl']) + id + ext;
 	}
+	self.toUrl = toUrl;
 
 	/**
 	 * Define module @id as @mod. Ignored if @id is already defined.
@@ -167,6 +169,46 @@ var define = (function () {
     }
     var m_defaultRepo = repository({ 'baseUrl': '', 'paths': {} });
 
+    function requirer(repo, context) {
+	/**
+	 * If @func is specified, call it with the resolved dependencies in
+	 * @env, otherwise return (a Promise for) them.
+	 */
+	function require(env, func) {
+	    // The 'module' object.
+	    var module = { 'exports': {} };
+
+	    if ('string' === typeof env) {
+		throw err('require', 'synchronous mode unimplemented');
+	    }
+
+	    // Optimise for dependency-free module.
+	    if (!env.length) {
+		return func ? func([]) : [];
+	    }
+
+	    // Resolve dependencies in the general case.
+	    return Promise.all(env.map(function (id) {
+		switch (id) {
+		    case 'exports': return module['exports'];
+		    case 'module':  return module;
+		    case 'require': return require;
+		}
+		if (context.some(function (c) { return id === c.id; })) {
+		    throw err('require', 'circular dependency',
+			context.map(function (c) { return c.id; }).push(id)
+		    );
+		}
+		return repo.get(id, context);
+	    })).then(function (deps) {
+		return func ? func.apply(void 0, deps) : deps;
+	    });
+	}
+	require['toUrl'] = repo.toUrl;
+
+	return require;
+    }
+
     // A buffer for define() invocations.
     var m_defines = [];
 
@@ -182,33 +224,17 @@ var define = (function () {
 	defines.forEach(function (mod) {
 	    var repo = mod.repo || ctx.repo || m_defaultRepo;
 
-	    // The 'module' object if the dependencies request it.
-	    var module;
-
 	    repo.define(mod.id || ctx.id,
 		// Optimise for pure object module.
 		'function' !== typeof mod.mod	? mod.mod :
 
-		// Optimise for dependency-free module.
-		!mod.env.length			? mod.mod.call(void 0) :
-
 		// Resolve dependencies in the general case.
-		Promise.all(mod.env.map(function (dep) {
-		    if ('exports' === dep || 'module' === dep) {
-			module = module || { 'exports': {} };
-			return 'e' === dep[0] ? module['exports'] : module;
-		    }
-		    if (context.some(function (c) { return dep === c.id; })) {
-			throw err('define', 'circular dependency',
-			    context.map(function (c) {
-				return c.id;
-			    }).push(dep)
-			);
-		    }
-		    return repo.get(dep, context);
-		})).then(function (deps) {
+		Promise.resolve(requirer(repo, context)(mod.env)).then(function (deps) {
+		    var moduleIdx = mod.env.indexOf('module');
+		    var exportsIdx = mod.env.indexOf('exports');
 		    return mod.mod.apply(void 0, deps)
-			|| module && module.exports;
+			|| -1 !== moduleIdx && deps[moduleIdx]['exports']
+			|| -1 !== exportsIdx && deps[exportsIdx];
 		})
 	    );
 	});
@@ -227,21 +253,24 @@ var define = (function () {
      */
     function definer(repo) {
 	/**
-	 * Define module `mod` with the optional `id`. If `mod` is a function,
-	 * invoke it with the optional dependencies listed in `env`.
+	 * Define module @mod with the optional @id. If @mod is a function,
+	 * invoke it with the optional dependencies listed in @env.
 	 */
 	function define(id, env, mod) {
 	    // Sort out the arguments.
 	    if (arguments.length < 3) {
 		mod = arguments[arguments.length - 1];
 		if (arguments.length < 2 || 'string' === typeof id) {
-		    env = [];
+		    env = void 0;
 		} else { // 2 <= arguments.length && 'string' !== typeof id
 		    env = id;
 		}
 		if (arguments.length < 2 || 'string' !== typeof id) {
 		    id = void 0;
 		}
+	    }
+	    if (!env) {
+		env = 'function' === typeof mod && mod.length ? s_rem : [];
 	    }
 	    m_defines.push({ 'id': id, 'env': env, 'mod': mod, 'repo': repo });
 

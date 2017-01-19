@@ -146,52 +146,41 @@ var define = (function () {
     }
     var m_defaultRepo = repository({ 'baseUrl': '', 'paths': {} });
 
-    function load(url) {
-	var xhr = new XMLHttpRequest();
-
-	xhr.open('GET', url);
-	return new Promise(function (resolve, reject) {
-	   xhr.onload = function () {
-		if (200 === this.status) {
-		    resolve(this.response);
-		} else {
-		    reject(err(url, this.status, this.statusText));
-		}
-	   };
-	   xhr.send();
-	});
-    }
-
     /**
      * Return (a promise for) the requested module. The context will be
      * used when processing defines from the loaded module.
      */
     function get(id, repo, context) {
+	var script;
+
+	function handleLoad(evt) {
+	    document.head.removeChild(script);
+	    script.removeEventListener('error', handleLoad);
+	    script.removeEventListener('load', handleLoad);
+
+	    // Call resolver directly to clear the queue.
+	    resolver(context.push({ 'id': id, 'repo': repo }));
+
+	    if ('error' === evt.type) {
+		repo.failure(id, err('define', id, 'load error'));
+	    } else {
+		// Reject Promise if module is still unresoled.
+		repo.failure(id, err('define', 'unresolved dependency', id));
+	    }
+	}
+
 	// Create a Promise that resolves when the module is defined.
 	return repo.declare(id, function () {
-	    // Load and execute the module script.
-	    load(repo.toUrl(id +'.js')).then(function (text) {
-		var geval = eval;
-
-		// Prevent starting the resolver as we will run it later.
-		m_start = function () {};
-		try {
-		    geval(text);
-		} finally {
-		    // Call resolver directly to clear the queue.
-		    resolver(context.push({ 'id': id, 'repo': repo }));
-		    // Reject Promise if module is still unresoled.
-		    repo.failure(id, err('define', 'unresolved dependency', id));
-		}
-	    });
+	    script = document.createElement('script');
+	    script.setAttribute('src', repo.toUrl(id +'.js'));
+	    script.addEventListener('error', handleLoad);
+	    script.addEventListener('load', handleLoad);
+	    document.head.appendChild(script);
 	});
     }
 
     // A buffer for define() invocations.
     var m_defines = [];
-
-    // A function to kick off resolving.
-    var m_start;
 
     /**
      * Process buffered `define` calls.
@@ -235,12 +224,13 @@ var define = (function () {
 		})
 	    );
 	});
-
-	new Promise(function (resolve) {
-	    m_start = resolve;
-	}).then(resolver);
     }
-    resolver();
+
+    // A function to kick off resolving.
+    var m_start;
+    new Promise(function (resolve) {
+	m_start = resolve;
+    }).then(resolver);
 
     /**
      * Create a `define` method with an optional @repo. If no @repo is

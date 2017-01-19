@@ -254,7 +254,6 @@ the `DESTDIR` environment variable to your web deployment location and run
 the familiar
 
 ```sh
-make obj
 make all install
 ```
 

@@ -217,17 +217,30 @@ var define = (function () {
 
 	    // Resolve dependencies in the general case.
 	    return Promise.all(env.map(function (id) {
-		switch (id) {
+		var mod;
+
+		id = id.split('!');
+		switch (id[0]) {
 		    case 'exports': return module['exports'];
 		    case 'module':  return module;
 		    case 'require': return require;
 		}
-		if (context.some(function (c) { return id === c.id; })) {
+		if (context.some(function (c) { return id[0] === c.id; })) {
 		    throw err('require', 'circular dependency',
-			context.map(function (c) { return c.id; }).push(id)
+			context.map(function (c) { return c.id; }).push(id[0])
 		    );
 		}
-		return repo.get(id, context);
+		mod = repo.get(id[0], context);
+		if (id.length < 2) {
+		    return mod;
+		}
+
+		// Invoke loader plugin.
+		return Promise.resolve(mod).then(function (loader) {
+		    return new Promise(function (resolve) {
+			loader.load(id.slice(1).join('!'), require, resolve);
+		    });
+		});
 	    })).then(function (deps) {
 		return func ? func.apply(void 0, deps) : deps;
 	    });
@@ -235,7 +248,7 @@ var define = (function () {
 
 	require['toUrl'] = function (id) {
 	    return repo.toUrl(id, context);
-	}
+	};
 
 	return require;
     }

@@ -41,10 +41,13 @@ following example, if the module is loaded as `mod/mod`, it will attempt to
 load its dependency using the module ID `mod/sub`.
 
 ```js
-define([ './sub', function (sub) {
+define([ './sub' ], function (sub) {
     // Use the submodule as sub.
 });
 ```
+
+[Loader plugins](#loader-plugins) provide another special kind of module
+ID.
 
 
 Examples
@@ -132,6 +135,21 @@ dependencies `[ 'require', 'exports', 'module' ]` are passed to the module
 function.
 
 
+Loader plugins
+--------------
+
+[Loader plugins][PLUG] provide other resource types than JavaScript code.
+If a dependency contains a `!` character, the module specified by the ID
+before the `!` is loaded and its `load` method is invoked, passing the
+remaining part of the dependency string as a parameter. The `load` function
+should expect three arguments: `id`, `require` and `onLoad`. The first
+argument will receive the trailing part of the dependency string. The
+second argument receives a `require` function that can be used to load
+resources relative to the module that invoked the loader plugin. And the
+final parameter is a function to be invoked with the value of the resource
+when it is available.
+
+
 Included modules
 ----------------
 
@@ -154,12 +172,38 @@ loaded completely. This is how it's used:
 \[[see](examples/domReady.html)\]
 
 
+The `domReady` module can also be used as a loader plugin to slightly
+reduce the boilerplate. In this case, the dependency resolves once the DOM
+is ready and the document is passed to the function as the value of the
+dependency.
+
+```js
+define([ 'domReady!' ], function (doc) {
+    document.write('hello, world!');
+});
+```
+
+
+The `text`, `json` and `xml` plugins are also included. They evaluate to
+the contents of the specified module ID loaded as the respective data type.
+
+```js
+define([ 'text!file.txt' ], function (file) {
+   var div = document.createElement('div');
+   div.textContent = file;
+   document.body.appendChild(div);
+});
+```
+\[[text](examples/text.html)\]
+\[[json](examples/data.html)\]
+
+
 
 Libraries
 ---------
 
-When `define` is called, it normally uses the module id from the dependency
-that caused the file to be loaded as the id of the module being defined.
+When `define` is called, it normally uses the module ID from the dependency
+that caused the file to be loaded as the ID of the module being defined.
 That's why ordinary modules shouldn't specify an `id` themselves when
 calling `define`.
 
@@ -168,9 +212,9 @@ a single file. This results in several calls to `define` from within that
 same file, making it impossible to deduce the names of the modules being
 defined.
 
-That's why the module id may be explicitly specified as the first argument
+That's why the module ID may be explicitly specified as the first argument
 to `define`. Just like regular modules, the main module of the library
-should not specify a model id.
+should not specify a module ID.
 
 ```js
 // Define a sub-module
@@ -223,9 +267,9 @@ define = define.config({
 The configuration options and their meanings are:
 
 * `paths`
-  As a first step when finding a dependency, if a prefix of the module id
-  componentns matches a property in this object, it is replaced with the
-  corresponding value. For the purpose of prefix detection, the module id
+  As a first step when finding a dependency, if a prefix of the module ID
+  components matches a property in this object, it is replaced with the
+  corresponding value. For the purpose of prefix detection, the module ID
   is considered to consist of components separated by `/` excluding an
   optional extension separated by `.`.
 
@@ -271,8 +315,7 @@ Limitations
 -----------
 
 There are certainly a lot of unimplemented features – in fact, everything
-that isn't mentioned above. Most notably missing are [loader
-plugins][PLUG].
+that isn't mentioned above.
 
 And don't even get me started about »[source scanning][REQ1]« to support
 `require`…

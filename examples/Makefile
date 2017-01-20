@@ -28,7 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 FILESGROUPS	=	FILES MODFILES
-FILES		=	domReady.html hello-d3.html lib.html lib.js mod.html
+FILES		=	data.json domReady.html hello-d3.html data.html
+FILES		+=	lib.html lib.js mod.html text.html
 FILESDIR	=	/examples
 MODFILES	=	mod/mod.js mod/sub0.js mod/sub1.js
 MODFILESDIR	=	${FILESDIR}/mod

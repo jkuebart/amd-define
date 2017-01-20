@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-SUBDIR		=	define domReady json text xml
+PROG_JS		=	${.CURDIR:T}.js
+JSDIR		=	/dist
 
-.include <bsd.subdir.mk>
+.include "../../mk/js.prog.mk"

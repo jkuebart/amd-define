@@ -43,6 +43,11 @@ var define = (function () {
 	return (1 + s.length + s.lastIndexOf(t)) % (1 + s.length);
     }
 
+    // Return the suffix of a module ID.
+    function idSuffix(s) {
+	return s.substr(1 + s.lastIndexOf('/'));
+    }
+
     // An immutable stack to keep track of the dependency hierarchy.
     var stack = (function () {
 	var emptyStack = {};
@@ -82,8 +87,9 @@ var define = (function () {
 	var m_modules = {};
 
 	function toUrl(id) {
-	    var prefix;
-	    var ext = id.substr(lastIndexOf(id.substr(1 + id.lastIndexOf('/')), '.'));
+	    var prefix, ext = idSuffix(id);
+
+	    ext = ext.substr(lastIndexOf(ext, '.'));
 	    id = id.substr(0, id.length - ext.length);
 	    for (prefix in options['paths']) {
 		if ({}.hasOwnProperty.call(options['paths'], prefix) &&

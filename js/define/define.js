@@ -44,6 +44,11 @@ var define = (function () {
 	return (1 + s.length + s.lastIndexOf(t)) % (1 + s.length);
     }
 
+    // The prefix of a module ID.
+    function idPrefix(s) {
+	return s.substr(0, 1 + s.lastIndexOf('/'));
+    }
+
     // Return the suffix of a module ID.
     function idSuffix(s) {
 	return s.substr(1 + s.lastIndexOf('/'));
@@ -87,11 +92,32 @@ var define = (function () {
 	// Promises for each loaded module.
 	var m_modules = {};
 
-	function toUrl(id) {
+	function toUrl(id, context) {
 	    var prefix, ext = idSuffix(id);
 
+	    if (s_isAbs.test(id)) {
+		return id;
+	    }
+
+	    // Remove extension.
 	    ext = ext.substr(lastIndexOf(ext, '.'));
 	    id = id.substr(0, id.length - ext.length);
+
+	    // Resolve relative module ID.
+	    if ('.' === id[0] && !context.empty()) {
+		id = idPrefix(context.top().id) + id;
+	    }
+
+	    // Process . and .. components
+	    id = id.split('/').reduce(function (a, p) {
+		switch (p) {
+		   case '': case '.':	return a;
+		   case '..':		return a.slice(0, a.length - 1);
+		   default:		return a.concat(p);
+		}
+	    }, []).join('/');
+
+	    // Perform `paths` configuration.
 	    for (prefix in options['paths']) {
 		if ({}.hasOwnProperty.call(options['paths'], prefix) &&
 		    (id === prefix || id.startsWith(prefix + '/')))
@@ -99,6 +125,8 @@ var define = (function () {
 		    id = options['paths'][prefix] + id.substr(prefix.length);
 		}
 	    }
+
+	    // Prefix with `baseUrl` if required, re-add extension.
 	    return (s_isAbs.test(id) ? '' : options['baseUrl']) + id + ext;
 	}
 	self.toUrl = toUrl;
@@ -149,7 +177,7 @@ var define = (function () {
 		});
 
 		script = document.createElement('script');
-		script.setAttribute('src', toUrl(id +'.js'));
+		script.setAttribute('src', toUrl(id +'.js', context));
 		script.addEventListener('error', handleLoad);
 		script.addEventListener('load', handleLoad);
 		document.head.appendChild(script);
@@ -204,7 +232,10 @@ var define = (function () {
 		return func ? func.apply(void 0, deps) : deps;
 	    });
 	}
-	require['toUrl'] = repo.toUrl;
+
+	require['toUrl'] = function (id) {
+	    return repo.toUrl(id, context);
+	}
 
 	return require;
     }

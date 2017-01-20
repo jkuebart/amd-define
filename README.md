@@ -35,6 +35,17 @@ separated by `/`. The `paths` configuration allows specifying replacements
 for prefixes of such components, making it possible to create individual
 »namespaces« of modules loaded from different locations.
 
+Finally, if a module specifies its dependencies using IDs starting with a
+`.`, they will be interpreted relative to that module's own ID. In the
+following example, if the module is loaded as `mod/mod`, it will attempt to
+load its dependency using the module ID `mod/sub`.
+
+```js
+define([ './sub', function (sub) {
+    // Use the submodule as sub.
+});
+```
+
 
 Examples
 --------
@@ -260,9 +271,8 @@ Limitations
 -----------
 
 There are certainly a lot of unimplemented features – in fact, everything
-that isn't mentioned above. For example, no normalisation is performed on
-module IDs, so names containing `.` or `..` elements will be treated
-incorrectly. Most notably missing are [loader plugins][PLUG].
+that isn't mentioned above. Most notably missing are [loader
+plugins][PLUG].
 
 And don't even get me started about »[source scanning][REQ1]« to support
 `require`…

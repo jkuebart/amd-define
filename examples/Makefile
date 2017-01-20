@@ -27,15 +27,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-FILES		=	domReady.html hello-d3.html lib.html lib.js
-NO_OBJ		=
+FILESGROUPS	=	FILES MODFILES
+FILES		=	domReady.html hello-d3.html lib.html lib.js mod.html
 FILESDIR	=	/examples
+MODFILES	=	mod/mod.js mod/sub0.js mod/sub1.js
+MODFILESDIR	=	${FILESDIR}/mod
+NO_OBJ		=
 
 beforeinstall:
-	if ! test -d ${DESTDIR}${FILESDIR}; then \
-		mkdir -p ${DESTDIR}${FILESDIR}; \
-		if ! test -d ${DESTDIR}${FILESDIR}; then \
-			${ECHO} "Unable to create ${DESTDIR}${FILESDIR}."; \
+	if ! test -d ${DESTDIR}${MODFILESDIR}; then \
+		mkdir -p ${DESTDIR}${MODFILESDIR}; \
+		if ! test -d ${DESTDIR}${MODFILESDIR}; then \
+			${ECHO} "Unable to create ${DESTDIR}${MODFILESDIR}."; \
 			exit 1; \
 		fi; \
 	fi;

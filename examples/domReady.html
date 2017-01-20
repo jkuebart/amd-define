@@ -3,7 +3,8 @@
 <meta charset="utf-8">
 <script src="../dist/define.js"></script>
 <script>
-    define([ '../dist/domReady' ], function (domReady) {
+    define.config({ 'paths': { 'dA': '../dist' } })
+    ([ 'dA/domReady' ], function (domReady) {
 	domReady(function () {
 	    document.write('hello, world!');
 	});

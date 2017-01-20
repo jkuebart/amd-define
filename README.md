@@ -15,6 +15,26 @@ Note that in case a circular dependency is detected, an Error will be
 reported. This is in contrast to [some other][CYC] AMD loaders that quietly
 soldier on.
 
+This package provides one function called `define`. It is usually called
+with two parameters, an array of module IDs and a function to which these
+dependencies should be passed (see [Examples](#examples)).
+
+In order to resolve the dependencies, the module IDs are used to find
+scripts which are then loaded and executed. These scripts are expected to
+call `define` themselves in order to provide a definition for the module.
+The module is usually the return value of the function passed as `define`'s
+second parameter, but see [Built-in
+pseudo-modules](#built-in-pseudo-modules) for alternatives.
+
+In the simplest case, module IDs are converted into URLs by appending
+`.js`. It is possible to specify a `baseUrl` in the
+[configuration](#configuration) pointing to the location of the modules.
+
+Much like path names, module IDs are considered to consist of components
+separated by `/`. The `paths` configuration allows specifying replacements
+for prefixes of such components, making it possible to create individual
+»namespaces« of modules loaded from different locations.
+
 
 Examples
 --------

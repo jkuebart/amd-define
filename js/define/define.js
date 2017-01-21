@@ -54,6 +54,20 @@ var define = (function () {
 	return s.substr(1 + s.lastIndexOf('/'));
     }
 
+    // Polyfill for Object.assign because it's missing on many platforms.
+    var assign = Object.assign || function (target) {
+	var a, i, k;
+	for (i = 1; i < arguments.length; ++i) {
+	    a = arguments[i];
+	    if (null != a) {
+		for (k in a) if ({}.hasOwnProperty.call(a, k)) {
+		    target[k] = a[k];
+		}
+	    }
+	}
+	return target;
+    };
+
     // An immutable stack to keep track of the dependency hierarchy.
     var stack = (function () {
 	var emptyStack = {};
@@ -190,7 +204,7 @@ var define = (function () {
 	 * Return a new repository with modified options.
 	 */
 	self.config = function (opts) {
-	    return repository(Object.assign({}, options, opts));
+	    return repository(assign({}, options, opts));
 	};
 
 	return self;

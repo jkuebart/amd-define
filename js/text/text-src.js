@@ -38,10 +38,10 @@ define({
 	xhr.responseType = config && config.type || 'text';
 	return new Promise(function (resolve, reject) {
 	    xhr.onload = function () {
-		if (200 === this.status) {
-		    resolve(this.response);
+		if (200 === xhr.status) {
+		    resolve(xhr.response);
 		} else {
-		    reject(new Error([ url, this.status, this.statusText ].join(': ')));
+		    reject(new Error([ url, xhr.status, xhr.statusText ].join(': ')));
 		}
 	    };
 	    xhr.send();

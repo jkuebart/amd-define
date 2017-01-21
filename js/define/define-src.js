@@ -34,8 +34,11 @@ var define = (function () {
     var s_isAbs = RegExp('^(/|[-+.A-Za-z0-9]+:)'); // Test for absolute paths
     var s_rem = [ 'require', 'exports', 'module' ];
 
-    // Construct an Error from the arguments.
-    function err() {
+    /**
+     * Construct an Error from the arguments.
+     * @param {...string} msgs
+     */
+    function err(msgs) {
 	return new Error([].join.call(arguments, ': '));
     }
 
@@ -154,7 +157,7 @@ var define = (function () {
 	self.define = function (id, mod) {
 	    if (id) {
 		if (!m_modules[id]) {
-		    m_modules[id] = { 'module': mod };
+		    m_modules[id] = { module: mod };
 		} else if (m_modules[id].resolve) {
 		    m_modules[id].resolve(mod);
 		}
@@ -175,7 +178,7 @@ var define = (function () {
 		script.removeEventListener('load', handleLoad);
 
 		// Call resolver directly to clear the queue.
-		resolver(context.push({ 'id': id, 'repo': self }));
+		resolver(context.push({ id: id, repo: self }));
 
 		if ('error' === evt.type) {
 		    module.reject(err('define', id, 'load error'));
@@ -333,7 +336,7 @@ var define = (function () {
 	    if (!env) {
 		env = 'function' === typeof mod && mod.length ? s_rem : [];
 	    }
-	    m_defines.push({ 'id': id, 'env': env, 'mod': mod, 'repo': repo });
+	    m_defines.push({ id: id, env: env, mod: mod, repo: repo });
 
 	    // Call m_start to start resolving after this script finishes.
 	    m_start();

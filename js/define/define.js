@@ -46,12 +46,12 @@ var define = (function () {
 
     // The prefix of a module ID.
     function idPrefix(s) {
-	return s.substr(0, 1 + s.lastIndexOf('/'));
+	return s.slice(0, 1 + s.lastIndexOf('/'));
     }
 
     // Return the suffix of a module ID.
     function idSuffix(s) {
-	return s.substr(1 + s.lastIndexOf('/'));
+	return s.slice(1 + s.lastIndexOf('/'));
     }
 
     // Polyfill for Object.assign because it's missing on many platforms.
@@ -119,8 +119,8 @@ var define = (function () {
 	    }
 
 	    // Remove extension.
-	    ext = ext.substr(lastIndexOf(ext, '.'));
-	    id = id.substr(0, id.length - ext.length);
+	    ext = ext.slice(lastIndexOf(ext, '.'));
+	    id = id.slice(0, -ext.length);
 
 	    // Resolve relative module ID.
 	    if ('.' === id[0] && !context.empty()) {
@@ -131,7 +131,7 @@ var define = (function () {
 	    id = id.split('/').reduce(function (a, p) {
 		switch (p) {
 		   case '': case '.':	return a;
-		   case '..':		return a.slice(0, a.length - 1);
+		   case '..':		return a.slice(0, -1);
 		   default:		return a.concat(p);
 		}
 	    }, []).join('/');
@@ -141,7 +141,7 @@ var define = (function () {
 		if ({}.hasOwnProperty.call(options['paths'], prefix) &&
 		    (id === prefix || startsWith(id, prefix + '/')))
 		{
-		    id = options['paths'][prefix] + id.substr(prefix.length);
+		    id = options['paths'][prefix] + id.slice(prefix.length);
 		}
 	    }
 

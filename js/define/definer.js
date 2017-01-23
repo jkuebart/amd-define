@@ -29,4 +29,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-window['define'] = definer();
+var definer = (function () {
+    'use strict';
+    var s_rem = [ 'require', 'exports', 'module' ];
+
+    // A function to kick off resolving.
+    var m_start;
+    new Promise(function (resolve) {
+	m_start = resolve;
+    }).then(resolver);
+
+    /**
+     * Create a `define` method with an optional @repo. If no @repo is
+     * specified, modules will be inserted into the 'most recent'
+     * repository on the dependency chain.
+     */
+    function definer(repo) {
+	/**
+	 * Define module @mod with the optional @id. If @mod is a function,
+	 * invoke it with the optional dependencies listed in @env.
+	 */
+	function define(id, env, mod) {
+	    // Sort out the arguments.
+	    if (arguments.length < 3) {
+		mod = arguments[arguments.length - 1];
+		if (arguments.length < 2 || 'string' === typeof id) {
+		    env = void 0;
+		} else { // 2 <= arguments.length && 'string' !== typeof id
+		    env = id;
+		}
+		if (arguments.length < 2 || 'string' !== typeof id) {
+		    id = void 0;
+		}
+	    }
+	    if (!env) {
+		env = 'function' === typeof mod && mod.length ? s_rem : [];
+	    }
+	    resolver.push(id, env, mod, repo);
+
+	    // Call m_start to start resolving after this script finishes.
+	    m_start();
+	}
+
+	/**
+	 * Return a new loader with a modified configuration.
+	 */
+	define['config'] = function (options) {
+	    return definer((repo || resolver.defaultRepo()).config(options));
+	};
+
+	define['amd'] = {};
+	return define;
+    }
+
+    return definer;
+}());

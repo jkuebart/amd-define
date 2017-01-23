@@ -28,6 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 PROG_JS		=	${.CURDIR:T}.js
+SRCS		=	util.js stack.js repository.js requirer.js
+SRCS		+=	resolver.js definer.js define-src.js
 JSDIR		=	/dist
 
 .include "../../mk/js.prog.mk"

@@ -29,4 +29,59 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-window['define'] = definer();
+function requirer(repo, context) {
+    'use strict';
+    /**
+     * If @func is specified, call it with the resolved dependencies in
+     * @env, otherwise return (a Promise for) them.
+     */
+    function require(env, func) {
+	// The 'module' object.
+	var module = { 'exports': {} };
+
+	if ('string' === typeof env) {
+	    throw err('require', 'synchronous mode unimplemented');
+	}
+
+	// Optimise for dependency-free module.
+	if (!env.length) {
+	    return func ? func([]) : [];
+	}
+
+	// Resolve dependencies in the general case.
+	return Promise.all(env.map(function (id) {
+	    var mod;
+
+	    id = id.split('!');
+	    switch (id[0]) {
+		case 'exports': return module['exports'];
+		case 'module':  return module;
+		case 'require': return require;
+	    }
+	    if (context.some(function (c) { return id[0] === c.id; })) {
+		throw err('require', 'circular dependency',
+		    context.map(function(c) { return c.id; }).push(id[0])
+		);
+	    }
+	    mod = repo.get(id[0], context);
+	    if (id.length < 2) {
+		return mod;
+	    }
+
+	    // Invoke loader plugin.
+	    return Promise.resolve(mod).then(function (loader) {
+		return new Promise(function (resolve) {
+		    loader.load(id.slice(1).join('!'), require, resolve);
+		});
+	    });
+	})).then(function (deps) {
+	    return func ? func.apply(void 0, deps) : deps;
+	});
+    }
+
+    require['toUrl'] = function (id) {
+	return repo.toUrl(id, context);
+    };
+
+    return require;
+}

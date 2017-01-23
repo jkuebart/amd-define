@@ -29,4 +29,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-window['define'] = definer();
+// An immutable stack to keep track of the dependency hierarchy.
+var stack = (function () {
+    'use strict';
+    var emptyStack = {};
+
+    emptyStack.empty = function () { return true; };
+    emptyStack.toString = function () { return ''; };
+    emptyStack.some = function () {};
+    emptyStack.map = function () { return emptyStack; };
+
+    emptyStack.push = function (item) {
+	var next = this, self = Object.create(emptyStack);
+	self.top = function () { return item; };
+	self.pop = function () { return next; };
+	self.empty = function () { return false; };
+	self.toString = function () { return item +', '+ next; };
+	self.some = function (func) {
+	    return func(item) || next.some(func);
+	};
+	self.map = function (func) {
+	    return next.map(func).push(func(item));
+	};
+	return self;
+    };
+
+    return function () {
+	return emptyStack;
+    };
+}());

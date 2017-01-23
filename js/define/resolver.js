@@ -29,4 +29,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-window['define'] = definer();
+var resolver = (function () {
+    'use strict';
+    var m_defaultRepo = repository({ 'baseUrl': '', 'paths': {} });
+
+    // A buffer for define() invocations.
+    var m_defines = [];
+
+    /**
+     * Process buffered `define` calls.
+     */
+    function resolver(context) {
+	var defines = m_defines, ctx;
+	m_defines = [];
+
+	context = context || stack();
+	ctx = context.empty() ? {} : context.top();
+	defines.forEach(function (mod) {
+	    var repo = mod.repo || ctx.repo || m_defaultRepo;
+
+	    repo.define(mod.id || ctx.id,
+		// Optimise for pure object module.
+		'function' !== typeof mod.mod	? mod.mod :
+
+		// Resolve dependencies in the general case.
+		Promise.resolve(requirer(repo, context)(mod.env)).then(function (deps) {
+		    var moduleIdx = mod.env.indexOf('module');
+		    var exportsIdx = mod.env.indexOf('exports');
+		    return mod.mod.apply(void 0, deps)
+			|| -1 !== moduleIdx && deps[moduleIdx]['exports']
+			|| -1 !== exportsIdx && deps[exportsIdx];
+		})
+	    );
+	});
+    }
+
+    resolver.push = function (id, env, mod, repo) {
+	m_defines.push({ id: id, env: env, mod: mod, repo: repo });
+    };
+
+    resolver.defaultRepo = function () {
+	return m_defaultRepo;
+    };
+
+    return resolver;
+}());

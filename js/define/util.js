@@ -29,4 +29,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-window['define'] = definer();
+/**
+ * Construct an Error from the arguments.
+ * @param {...string} msgs
+ */
+function err(msgs) {
+    'use strict';
+    return new Error([].join.call(arguments, ': '));
+}
+
+// A version of lastIndexOf that returns length if not found.
+function lastIndexOf(s, t) {
+    'use strict';
+    return (1 + s.length + s.lastIndexOf(t)) % (1 + s.length);
+}
+
+// The prefix of a module ID.
+function idPrefix(s) {
+    'use strict';
+    return s.slice(0, 1 + s.lastIndexOf('/'));
+}
+
+// Return the suffix of a module ID.
+function idSuffix(s) {
+    'use strict';
+    return s.slice(1 + s.lastIndexOf('/'));
+}
+
+// Polyfill for Object.assign because it's missing on many platforms.
+var assign = Object.assign || function (target) {
+    'use strict';
+    var a, i;
+    for (i = 1; i < arguments.length; ++i) {
+	a = arguments[i];
+	if (null != a) {
+	    Object.keys(a).forEach(function (k) {
+		target[k] = a[k];
+	    });
+	}
+    }
+    return target;
+};
+
+// Polyfill for String.prototype.startsWith which isn't common
+function startsWith(str, pref) {
+    'use strict';
+    return str.slice(0, pref.length) === pref;
+}

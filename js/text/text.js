@@ -30,7 +30,7 @@
  */
 
 define({
-    'load': function load(url, require, func, config) {
+    'load': function (url, require, func, config) {
 	'use strict';
 	var xhr = new XMLHttpRequest();
 

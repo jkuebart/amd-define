@@ -29,11 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-define(function (require, exports) {
+define([ './text' ], function (text) {
     'use strict';
-    exports.load = function (url, rqr, func) {
-	require([ './text' ], function (text) {
-	    text.load(url, rqr, func, { 'type': 'document' });
-	});
+    return {
+	'load': function (url, rqr, func) {
+	    return text.load(url, rqr, func, { 'type': 'document' });
+	},
     };
 });

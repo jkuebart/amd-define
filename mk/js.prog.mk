@@ -27,28 +27,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-.SUFFIXES:
-.SUFFIXES:	.js -src.js
-
 UGLIFYJS	?=	uglifyjs
 UGLIFYJSFLAGS	?=	-c -m -v
 
-SRCS		?=	${PROG_JS}
+SRCS		?=	${PROG_JS:.js=-src.js}
 MAP		?=	${PROG_JS:=.map}
-DISTSRCS	?=	${SRCS:.js=-src.js}
 
-MINI		=	${PROG_JS:.js=-out.js}
-
-CLEANFILES	+=	${MINI} ${MAP} ${DISTSRCS}
+CLEANFILES	+=	${PROG_JS} ${MAP}
 
 JSOWN		?=	${SHAREOWN}
 JSGRP		?=	${SHAREGRP}
 JSMODE		?=	${SHAREMODE}
 
-all:		${MINI} ${MAP} ${DISTSRCS}
+all:		${PROG_JS} ${MAP}
 
 .PHONY:		install
-install:
+install:	${PROG_JS} ${MAP} ${SRCS}
 	@if ! test -d ${DESTDIR}${JSDIR}; then \
 		mkdir -p ${DESTDIR}${JSDIR}; \
 		if ! test -d ${DESTDIR}${JSDIR}; then \
@@ -57,19 +51,17 @@ install:
 		fi; \
 	fi
 	${INSTALL} -o ${JSOWN} -g ${JSGRP} -m ${JSMODE} \
-		${MINI} ${DESTDIR}${JSDIR}/${PROG_JS}
-	${INSTALL} -o ${JSOWN} -g ${JSGRP} -m ${JSMODE} \
-		${MAP} ${DISTSRCS} ${DESTDIR}${JSDIR}
+		${.ALLSRC} ${DESTDIR}${JSDIR}
 
-.js-src.js:
-	cp -p ${.IMPSRC} ${.TARGET}
-
-${MINI}: ${DISTSRCS}
+${PROG_JS}:	${SRCS}
+	pref=${.ALLSRC:H:C,[^/]*,,g:Q}; \
+	pref=$${pref%% *}; \
 	${UGLIFYJS} ${UGLIFYJSFLAGS} \
 		-o ${.TARGET} \
 		--source-map ${MAP} \
+		-p $${#pref} \
 		-- ${.ALLSRC}
 
-${MAP}: ${MINI}
+${MAP}:		${PROG_JS}
 
 .include <bsd.obj.mk>

@@ -68,6 +68,11 @@ var define = (function () {
 	return target;
     };
 
+    // Polyfill for String.prototype.startsWith which isn't common
+    function startsWith(str, pref) {
+	return str.slice(0, pref.length) === pref;
+    }
+
     // An immutable stack to keep track of the dependency hierarchy.
     var stack = (function () {
 	var emptyStack = {};
@@ -134,7 +139,7 @@ var define = (function () {
 	    // Perform `paths` configuration.
 	    for (prefix in options['paths']) {
 		if ({}.hasOwnProperty.call(options['paths'], prefix) &&
-		    (id === prefix || id.startsWith(prefix + '/')))
+		    (id === prefix || startsWith(id, prefix + '/')))
 		{
 		    id = options['paths'][prefix] + id.substr(prefix.length);
 		}

@@ -36,7 +36,7 @@ var repository = (function () {
     /**
      * A container of modules loaded with a specific set of options.
      */
-    function repository(options) {
+    function repository(options, resolver) {
 	var self = {};
 
 	// Promises for each loaded module.
@@ -138,7 +138,7 @@ var repository = (function () {
 	 * Return a new repository with modified options.
 	 */
 	self.config = function (opts) {
-	    return repository(assign({}, options, opts));
+	    return repository(assign({}, options, opts), resolver);
 	};
 
 	return self;

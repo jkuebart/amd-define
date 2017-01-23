@@ -31,7 +31,7 @@
 
 var resolver = (function () {
     'use strict';
-    var m_defaultRepo = repository({ 'baseUrl': '', 'paths': {} });
+    var m_defaultRepo = repository({ 'baseUrl': '', 'paths': {} }, resolver);
 
     // A buffer for define() invocations.
     var m_defines = [];

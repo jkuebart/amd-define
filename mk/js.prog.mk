@@ -70,4 +70,6 @@ ${MINI}: ${DISTSRCS}
 		--source-map ${MAP} \
 		-- ${.ALLSRC}
 
+${MAP}: ${MINI}
+
 .include <bsd.obj.mk>

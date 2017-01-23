@@ -1,0 +1,1 @@
+{"version":3,"sources":["xml-src.js"],"names":["define","text","load","url","rqr","func","type"],"mappings":"AA+BAA,QAAS,UAAY,SAAUC,GAC3B,YACA,QACHC,KAAQ,SAAUC,EAAKC,EAAKC,GACxB,MAAOJ,GAAKC,KAAKC,EAAKC,EAAKC,GAAQC,KAAQ","file":"xml-out.js"}

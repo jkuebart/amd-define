@@ -1,0 +1,12 @@
+<!doctype html>
+<title>dietAMD example</title>
+<meta charset="utf-8">
+<script src="../dist/define.js"></script>
+<script>
+    define.config({ 'paths': { 'dA': '../dist' } })
+    ([ 'dA/domReady' ], function (domReady) {
+	domReady(function () {
+	    document.body.textContent = 'hello, world!';
+	});
+    });
+</script>

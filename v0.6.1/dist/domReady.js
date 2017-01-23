@@ -1,0 +1,2 @@
+define(function(){"use strict";function e(e){n.then(function(){e(document)})}var n=new Promise(function(e){function n(){"complete"===document.readyState&&(document.removeEventListener("readystatechange",n),e())}document.addEventListener("readystatechange",n),n()});return e.load=function(n,t,c){return e(c)},e});
+//# sourceMappingURL=domReady.js.map

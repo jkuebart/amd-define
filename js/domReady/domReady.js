@@ -35,11 +35,11 @@ define(function () {
     var s_domReady = new Promise(function (resolve) {
 	function resolveIfComplete() {
 	    if ('complete' === document.readyState) {
+		document.removeEventListener('readystatechange', resolveIfComplete);
 		resolve();
 	    }
 	}
 	document.addEventListener('readystatechange', resolveIfComplete);
-	document.addEventListener('DOMContentLoaded', resolve);
 	resolveIfComplete();
     });
 

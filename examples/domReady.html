@@ -6,7 +6,7 @@
     define.config({ 'paths': { 'dA': '../dist' } })
     ([ 'dA/domReady' ], function (domReady) {
 	domReady(function () {
-	    document.write('hello, world!');
+	    document.body.textContent = 'hello, world!';
 	});
     });
 </script>

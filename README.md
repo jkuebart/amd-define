@@ -164,7 +164,7 @@ loaded completely. This is how it's used:
 <script>
     define([ 'domReady' ], function (domReady) {
         domReady(function () {
-            document.write('hello, world!');
+            document.body.textContent = 'hello, world!';
         });
     });
 </script>
@@ -179,7 +179,7 @@ dependency.
 
 ```js
 define([ 'domReady!' ], function (doc) {
-    document.write('hello, world!');
+    document.body.textContent = 'hello, world!';
 });
 ```
 

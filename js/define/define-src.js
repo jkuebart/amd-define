@@ -29,7 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-var define = (function () {
     'use strict';
     var s_isAbs = RegExp('^(/|[-+.A-Za-z0-9]+:)'); // Test for absolute paths
     var s_rem = [ 'require', 'exports', 'module' ];
@@ -353,5 +352,4 @@ var define = (function () {
 	return define;
     }
 
-    return definer();
-}());
+    window['define'] = definer();

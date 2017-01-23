@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 UGLIFYJS	?=	uglifyjs
-UGLIFYJSFLAGS	?=	-c -m -v
+UGLIFYJSFLAGS	?=	-c --enclose -m -v
 
 SRCS		?=	${PROG_JS:.js=-src.js}
 MAP		?=	${PROG_JS:=.map}

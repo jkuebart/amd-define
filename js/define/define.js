@@ -56,13 +56,13 @@ var define = (function () {
 
     // Polyfill for Object.assign because it's missing on many platforms.
     var assign = Object.assign || function (target) {
-	var a, i, k;
+	var a, i;
 	for (i = 1; i < arguments.length; ++i) {
 	    a = arguments[i];
 	    if (null != a) {
-		for (k in a) if ({}.hasOwnProperty.call(a, k)) {
+		Object.keys(a).forEach(function (k) {
 		    target[k] = a[k];
-		}
+		});
 	    }
 	}
 	return target;
@@ -112,7 +112,7 @@ var define = (function () {
 	var m_modules = {};
 
 	function toUrl(id, context) {
-	    var prefix, ext = idSuffix(id);
+	    var ext = idSuffix(id);
 
 	    if (s_isAbs.test(id)) {
 		return id;
@@ -137,13 +137,11 @@ var define = (function () {
 	    }, []).join('/');
 
 	    // Perform `paths` configuration.
-	    for (prefix in options['paths']) {
-		if ({}.hasOwnProperty.call(options['paths'], prefix) &&
-		    (id === prefix || startsWith(id, prefix + '/')))
-		{
+	    Object.keys(options['paths']).forEach(function (prefix) {
+		if (id === prefix || startsWith(id, prefix + '/')) {
 		    id = options['paths'][prefix] + id.slice(prefix.length);
 		}
-	    }
+	    });
 
 	    // Prefix with `baseUrl` if required, re-add extension.
 	    return (s_isAbs.test(id) ? '' : options['baseUrl']) + id + ext;

@@ -60,7 +60,7 @@ Here's an example of how to load Mike Bostock's [D3](https://d3js.org/):
 <title>dietAMD example</title>
 <script src="define.js"></script>
 <script>
-    define([ 'https://d3js.org/d3.v4.min' ], function (d3) {
+    define([ '//d3js.org/d3.v4.min' ], function (d3) {
         d3.select('body').text('Hello, D3!');
     });
 </script>
@@ -259,7 +259,7 @@ then always use this global instance instead of the one they inherit.
 ```js
 // Not recommended!
 define = define.config({
-    'paths': { 'd3': 'https://d3js.org/d3.v4.min' },
+    'paths': { 'd3': '//d3js.org/d3.v4.min' },
 });
 ```
 

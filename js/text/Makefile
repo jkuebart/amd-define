@@ -27,7 +27,4 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PROG_JS		=	${.CURDIR:T}.js
-JSDIR		=	/dist
-
-.include "../../mk/js.prog.mk"
+.include "../../default.mk"
